@@ -1,0 +1,186 @@
+# This Powershell script is an automated version of the Intrusion Detection Windows Cheat Sheet from SANS. 
+# Script generate two txt files: a capture and a file containing the hashes of the capture.
+# This script is meant to run on a single PC. Must use Powershell in Administrator mode.
+# Author: Infosec_Taylor
+
+#Get name of computer running script
+$computer = $env:computername
+
+#Location of where to write the generated files. Change $Location to write to a different directory.
+$Location = "c:"
+
+#Creating the file names. Adds computer name and timestamp to file name. Change text within quote to rename file.
+$IntrusionFile = "IntrusionDetectionCapture $computer $(Get-Date -Format s | foreach {$_ -replace ":", "-"}).txt"
+
+New-Item -Path $Location -Name $IntrusionFile -ItemType File
+
+#Begin Capture Script
+#Get basic information such as timestamp, computer name, and IP information.
+'==============================================' | Out-File -FilePath $Location\$IntrusionFile -Append
+'Starting Intrusion Detection Capture Script' | Out-File -FilePath $Location\$IntrusionFile -Append
+'==============================================' | Out-File -FilePath $Location\$IntrusionFile -Append
+
+'==============================================' | Out-File -FilePath $Location\$IntrusionFile -Append
+'Time Generated' | Out-File -FilePath $Location\$IntrusionFile -Append
+'==============================================' | Out-File -FilePath $Location\$IntrusionFile -Append
+
+Get-Date -Format G | Out-File -FilePath $Location\$IntrusionFile -Append
+
+'==============================================' | Out-File -FilePath $Location\$IntrusionFile -Append
+'Computer Name and IP Information' | Out-File -FilePath $Location\$IntrusionFile -Append
+'==============================================' | Out-File -FilePath $Location\$IntrusionFile -Append
+
+"Computer Name: $computer" | Out-File -FilePath $Location\$IntrusionFile -Append
+"Computer IP: $(Get-NetIPAddress)" | Out-File -FilePath $Location\$IntrusionFile -Append
+
+# Capture of processes. Tasklist creates basic list of porcess.
+# wmic process list full gives detailed information about processes.
+# When analyzing, scan the basic list before moving into the detailed section.
+'==============================================' | Out-File -FilePath $Location\$IntrusionFile -Append
+'Beginning Basic Process Capture' | Out-File -FilePath $Location\$IntrusionFile -Append
+'==============================================' | Out-File -FilePath $Location\$IntrusionFile -Append
+
+tasklist | Out-File -FilePath $Location\$IntrusionFile -Append
+
+'==============================================' | Out-File -FilePath $Location\$IntrusionFile -Append
+'Beginning Detailed Process Capture' | Out-File -FilePath $Location\$IntrusionFile -Append
+'==============================================' | Out-File -FilePath $Location\$IntrusionFile -Append
+
+wmic process list full | Out-File -FilePath $Location\$IntrusionFile -Append
+
+# Capture of services. Net start creates basic list of services. Tasklist creates detailed list of services.
+# When analyzing, scan the basic list before moving into the detailed section
+'==============================================' | Out-File -FilePath $Location\$IntrusionFile -Append
+'Beginning Basic Services Capture' | Out-File -FilePath $Location\$IntrusionFile -Append
+'==============================================' | Out-File -FilePath $Location\$IntrusionFile -Append
+
+net start | Out-File -FilePath $Location\$IntrusionFile -Append
+
+'==============================================' | Out-File -FilePath $Location\$IntrusionFile -Append
+'Beginning Detailed Services Capture' | Out-File -FilePath $Location\$IntrusionFile -Append
+'==============================================' | Out-File -FilePath $Location\$IntrusionFile -Append
+tasklist /svc | Out-File -FilePath $Location\$IntrusionFile -Append
+
+# Capture of registry keys that hold information about what is running at startup.
+'==============================================' | Out-File -FilePath $Location\$IntrusionFile -Append
+'Beginning Startup Registry Key Capture' | Out-File -FilePath $Location\$IntrusionFile -Append
+'==============================================' | Out-File -FilePath $Location\$IntrusionFile -Append
+reg query HKLM\Software\Microsoft\Windows\CurrentVersion\Run  | Out-File -FilePath $Location\$IntrusionFile -Append
+reg query HKLM\Software\Microsoft\Windows\CurrentVersion\Runonce | Out-File -FilePath $Location\$IntrusionFile -Append
+
+reg query HKCU\Software\Microsoft\Windows\CurrentVersion\Run | Out-File -FilePath $Location\$IntrusionFile -Append
+reg query HKCU\Software\Microsoft\Windows\CurrentVersion\Runonce | Out-File -FilePath $Location\$IntrusionFile -Append
+
+# Capture of scheduled tasks. Look for unusal scheduled tasks.
+'==============================================' | Out-File -FilePath $Location\$IntrusionFile -Append
+'Beginning Scheduled Tasks Capture' | Out-File -FilePath $Location\$IntrusionFile -Append
+'==============================================' | Out-File -FilePath $Location\$IntrusionFile -Append
+
+schtasks | Out-File -FilePath $Location\$IntrusionFile -Append
+
+# Capture of programs that run on startup. Look for unusual programs.
+'==============================================' | Out-File -FilePath $Location\$IntrusionFile -Append
+'Beginning Auto Startup Items Capture' | Out-File -FilePath $Location\$IntrusionFile -Append
+'==============================================' | Out-File -FilePath $Location\$IntrusionFile -Append
+
+wmic startup list full | Out-File -FilePath $Location\$IntrusionFile -Append
+
+# Capture of user accounts on computer and users in the local administrator group. Look for unusual user accounts.
+'==============================================' | Out-File -FilePath $Location\$IntrusionFile -Append
+'Beginning User Account Capture' | Out-File -FilePath $Location\$IntrusionFile -Append
+'==============================================' | Out-File -FilePath $Location\$IntrusionFile -Append
+
+net user | Out-File -FilePath $Location\$IntrusionFile -Append
+
+'==============================================' | Out-File -FilePath $Location\$IntrusionFile -Append
+'Beginning Local Administrators Capture' | Out-File -FilePath $Location\$IntrusionFile -Append
+'==============================================' | Out-File -FilePath $Location\$IntrusionFile -Append
+
+net localgroup administrators | Out-File -FilePath $Location\$IntrusionFile -Append
+
+# Capture of open file shares. There should be nothing here without a business purpose.
+'==============================================' | Out-File -FilePath $Location\$IntrusionFile -Append
+'Beginning Active File Share Capture' | Out-File -FilePath $Location\$IntrusionFile -Append
+'==============================================' | Out-File -FilePath $Location\$IntrusionFile -Append
+
+net view \\127.0.0.1 | Out-File -FilePath $Location\$IntrusionFile -Append
+
+# Capture of open sessions with this computer. There should be nothing here without a business purpose.
+'==============================================' | Out-File -FilePath $Location\$IntrusionFile -Append
+'Beginning Open Sessions to Machine Capture' | Out-File -FilePath $Location\$IntrusionFile -Append
+'==============================================' | Out-File -FilePath $Location\$IntrusionFile -Append
+
+net session | Out-File -FilePath $Location\$IntrusionFile -Append
+
+# Capture of open session from the computer to other computers. There should be nothing here without a business purpose.
+'==============================================' | Out-File -FilePath $Location\$IntrusionFile -Append
+'Beginning Open Session From Machine Capture' | Out-File -FilePath $Location\$IntrusionFile -Append
+'==============================================' | Out-File -FilePath $Location\$IntrusionFile -Append
+
+net use | Out-File -FilePath $Location\$IntrusionFile -Append
+
+# Capture of listening TCP and UDP Ports with PID information. Look for unusual established connections.
+'==============================================' | Out-File -FilePath $Location\$IntrusionFile -Append
+'Beginning Listening TCP and UDP Port Capture' | Out-File -FilePath $Location\$IntrusionFile -Append
+'==============================================' | Out-File -FilePath $Location\$IntrusionFile -Append
+
+netstat -nao | Out-File -FilePath $Location\$IntrusionFile -Append
+
+# Capture of Windows Firewall Configuration. Look for unusual firewall entries.
+'=================================================' | Out-File -FilePath $Location\$IntrusionFile -Append
+'Beginning Windows Firewall Configuration Capture' | Out-File -FilePath $Location\$IntrusionFile -Append
+'=================================================' | Out-File -FilePath $Location\$IntrusionFile -Append
+
+netsh advfirewall firewall show rule name=all | Out-File -FilePath $Location\$IntrusionFile -Append
+
+# Capture of last 500 Event Log entries for Application, Security, and System. 
+# Increase the 500 if you need more event logs for a longer history. Check for unusual events.
+'====================================================' | Out-File -FilePath $Location\$IntrusionFile -Append
+'Beginning Capture of Security Event Logs (last 500)' | Out-File -FilePath $Location\$IntrusionFile -Append
+'====================================================' | Out-File -FilePath $Location\$IntrusionFile -Append
+
+Get-EventLog -Newest 500 -LogName "Security" | Out-File -FilePath $Location\$IntrusionFile -Append
+
+'======================================================' | Out-File -FilePath $Location\$IntrusionFile -Append
+'Beginning Capture of Application Event Logs (last 500)' | Out-File -FilePath $Location\$IntrusionFile -Append
+'======================================================' | Out-File -FilePath $Location\$IntrusionFile -Append
+
+Get-EventLog -Newest 500 -LogName "Application" | Out-File -FilePath $Location\$IntrusionFile -Append
+
+'====================================================' | Out-File -FilePath $Location\$IntrusionFile -Append
+'Beginning Capture of System Event Logs (last 500)' | Out-File -FilePath $Location\$IntrusionFile -Append
+'====================================================' | Out-File -FilePath $Location\$IntrusionFile -Append
+
+Get-EventLog -Newest 500 -LogName "System" | Out-File -FilePath $Location\$IntrusionFile -Append
+
+# End of the capture script.
+'==============================================' | Out-File -FilePath $Location\$IntrusionFile -Append
+'Ending Intrusion Detection Quick Script' | Out-File -FilePath $Location\$IntrusionFile -Append
+'==============================================' | Out-File -FilePath $Location\$IntrusionFile -Append
+
+#Create file containing hashes of the capture script.
+$HashFile = "IntrusionDetectionCapture $computer $(Get-Date -Format s | foreach {$_ -replace ":", "-"}) Hash.txt"
+
+New-Item -Path $Location -Name $HashFile -ItemType File
+
+# Generate MD5 and SHA256 Hashes of capture file.
+'==============================================' | Out-File -FilePath $Location\$HashFile -Append
+"Auto-Generating File Hashes for $Location\$IntrusionFile" | Out-File -FilePath $Location\$HashFile -Append
+'==============================================' | Out-File -FilePath $Location\$HashFile -Append
+'==============================================' | Out-File -FilePath $Location\$HashFile -Append
+'Time Generated' | Out-File -FilePath $Location\$HashFile -Append
+'==============================================' | Out-File -FilePath $Location\$HashFile -Append
+
+Get-Date -Format G | Out-File -FilePath $Location\$HashFile -Append
+
+'==============================================' | Out-File -FilePath $Location\$HashFile -Append
+'MD5 Hash' | Out-File -FilePath $Location\$HashFile -Append
+'==============================================' | Out-File -FilePath $Location\$HashFile -Append
+
+Get-FileHash $Location\$IntrusionFile -Algorithm MD5 | Format-List | Out-File -FilePath $Location\$HashFile -Append
+
+'==============================================' | Out-File -FilePath $Location\$HashFile -Append
+'SHA256 Hash' | Out-File -FilePath $Location\$HashFile -Append
+'==============================================' | Out-File -FilePath $Location\$HashFile -Append
+
+Get-FileHash $Location\$IntrusionFile -Algorithm SHA256 | Format-List | Out-File -FilePath $Location\$HashFile -Append
