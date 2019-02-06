@@ -1,0 +1,70 @@
+# Powershell script to get inventory details of a computer from Active Directory. 
+# You can choose a list of all PCs in AD, one pc, or from a txt list of PC names.
+# You can choose to put the results in a CSV file. Otherwise, results will open in a Gridview window.
+# Files are written to default C:\Users\<Current User>\Documents. Change $docdir for a different location.
+# Script must be ran in an elevated Powershell console.
+# Author: Infosec_Taylor
+
+#User Input for script options
+$choice = Read-Host 'Do you want information on all PCs (1), one PC (2), or from a list of PCs (3)?'
+$export = Read-Host 'Do you want the results in a file? (y or n)'
+
+#Creating Defualt Location for file storage. Change the $docdir to save in a different folder. If directory does not exist, it is created.
+if ($export -eq 'y'){
+    $username = $env:username
+    $docdir = "c:\users\$username\Documents"
+
+    If(!(test-path $docdir)){
+        New-Item -ItemType Directory -Force -Path $docdir
+    }
+}
+
+#Inventory all computers in Active Directory
+if ($choice -eq '1'){
+
+    Write-Host '**WARNING** This will take several minutes to complete with a large Active Directory'
+
+    if ($export -eq 'y'){
+        Get-ADComputer -filter * -Properties Name,IPv4address,LastLogonDate,Enabled,LockedOut,CanonicalName,DistinguishedName,OperatingSystem,OperatingSystemVersion,whenCreated,whenChanged,PasswordExpired,PasswordLastSet,LastBadPasswordAttempt,LogonCount,ModifyTimeStamp,SID | Select-Object Name,IPv4address,LastLogonDate,Enabled,LockedOut,CanonicalName,DistinguishedName,OperatingSystem,OperatingSystemVersion,whenCreated,whenChanged,PasswordExpired,PasswordLastSet,LastBadPasswordAttempt,LogonCount,ModifyTimeStamp,SID | Sort-Object -Property Name | Export-Csv "$docdir\Computers Basic Information - All Computers.csv"
+        Write-Host "File 'Computer Inventory - All Computers.csv is located in $docdir"
+     }
+     else{
+        Get-ADComputer -filter * -Properties Name,IPv4address,LastLogonDate,Enabled,LockedOut,CanonicalName,DistinguishedName,OperatingSystem,OperatingSystemVersion,whenCreated,whenChanged,PasswordExpired,PasswordLastSet,LastBadPasswordAttempt,LogonCount,ModifyTimeStamp,SID | Select-Object Name,IPv4address,LastLogonDate,Enabled,LockedOut,CanonicalName,DistinguishedName,OperatingSystem,OperatingSystemVersion,whenCreated,whenChanged,PasswordExpired,PasswordLastSet,LastBadPasswordAttempt,LogonCount,ModifyTimeStamp,SID | Sort-Object -Property Name | Out-GridView
+     }
+
+#Inventory one OU from Active Directory. Change information in $path to reflect your AD where your computer container.
+} 
+
+#Inventory one pc only
+if ($choice -eq '2'){
+    $computer = Read-Host 'Which computer would like to lookup?'
+    try{
+        if ($export -eq 'y'){
+            Get-ADComputer $computer -Properties Name,IPv4address,LastLogonDate,Enabled,LockedOut,CanonicalName,DistinguishedName,OperatingSystem,OperatingSystemVersion,whenCreated,whenChanged,PasswordExpired,PasswordLastSet,LastBadPasswordAttempt,LogonCount,ModifyTimeStamp,SID | Select-Object Name,IPv4address,LastLogonDate,Enabled,LockedOut,CanonicalName,DistinguishedName,OperatingSystem,OperatingSystemVersion,whenCreated,whenChanged,PasswordExpired,PasswordLastSet,LastBadPasswordAttempt,LogonCount,ModifyTimeStamp,SID | Sort-Object -Property Name | Export-Csv "$docdir\Computers Basic Information - $computer.csv"
+            Write-Host "File 'Computer Inventory - $computer.csv is located in $docdir"
+        }
+        else{
+            Get-ADComputer $computer -Properties Name,IPv4address,LastLogonDate,Enabled,LockedOut,CanonicalName,DistinguishedName,OperatingSystem,OperatingSystemVersion,whenCreated,whenChanged,PasswordExpired,PasswordLastSet,LastBadPasswordAttempt,LogonCount,ModifyTimeStamp,SID | Select-Object Name,IPv4address,LastLogonDate,Enabled,LockedOut,CanonicalName,DistinguishedName,OperatingSystem,OperatingSystemVersion,whenCreated,whenChanged,PasswordExpired,PasswordLastSet,LastBadPasswordAttempt,LogonCount,ModifyTimeStamp,SID | Sort-Object -Property Name | Out-GridView
+        }
+    }
+    catch{
+        Write-Host "Computer does not exist or is misspelled"
+    }
+}
+
+#Inventory from list of PCs in a txt file.
+if ($choice -eq '3'){
+    $list = Read-Host 'What is the name and location of the list? (Ex. C:\List.txt)'
+    if (test-path $list){
+        if ($export -eq 'y'){
+            Get-Content $list | ForEach-Object {Get-ADComputer $_ -Properties Name,IPv4address,LastLogonDate,Enabled,LockedOut,CanonicalName,DistinguishedName,OperatingSystem,OperatingSystemVersion,whenCreated,whenChanged,PasswordExpired,PasswordLastSet,LastBadPasswordAttempt,LogonCount,ModifyTimeStamp,SID | Select-Object NName,IPv4address,LastLogonDate,Enabled,LockedOut,CanonicalName,DistinguishedName,OperatingSystem,OperatingSystemVersion,whenCreated,whenChanged,PasswordExpired,PasswordLastSet,LastBadPasswordAttempt,LogonCount,ModifyTimeStamp,SID} | Sort-Object -Property Name | Export-Csv "$docdir\Computers Basic Information - From List.csv" 
+            Write-Host "File 'Computer Inventory - From List.csv is located in $docdir"
+         }
+         else{
+            Get-Content $list | ForEach-Object {Get-ADComputer $_ -Properties Name,IPv4address,LastLogonDate,Enabled,LockedOut,CanonicalName,DistinguishedName,OperatingSystem,OperatingSystemVersion,whenCreated,whenChanged,PasswordExpired,PasswordLastSet,LastBadPasswordAttempt,LogonCount,ModifyTimeStamp,SID | Select-Object Name,IPv4address,LastLogonDate,Enabled,LockedOut,CanonicalName,DistinguishedName,OperatingSystem,OperatingSystemVersion,whenCreated,whenChanged,PasswordExpired,PasswordLastSet,LastBadPasswordAttempt,LogonCount,ModifyTimeStamp,SID} | Sort-Object -Property Name | Out-GridView
+         }
+     }
+     else {
+        Write-Host "List not found."
+     }
+}
