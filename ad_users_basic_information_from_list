@@ -1,0 +1,35 @@
+# Pulls basic information about Active Directory users from a txt file. Text file should contain one user per line.
+# Reports user account name, first name, last name, department, email address, when created, when changed, password last set, 
+# last logon, if they can change their password, and if their password expires
+# Can give results in a csv file or in a GridView window. To specify a new location for the generated report, change the $docdir variable.
+# Author: Infosec_Taylor
+
+# User input
+$export = Read-Host 'Do you want the results in a file? (y or n)'
+$list = Read-Host 'What is the name and location of the list? (Ex. C:\List.txt)'
+
+if (test-path $list){
+    if ($export -eq 'y'){
+        $username = $env:username
+        
+# Change $docdir to save in a different folder
+        $docdir = "c:\users\$username\documents"
+
+# Create directory location if it does not exist        
+        If(!(test-path $docdir)){
+            New-Item -ItemType Directory -Force -Path $docdir
+        }
+
+# Takes each user from list and runs get-aduser to pull user details from Active Directory        
+        Get-Content $list | ForEach-Object {Get-aduser $_ -properties department, PasswordLastSet, LastLogonTimeStamp, CannotChangePassword, PasswordNeverExpires, EmailAddress, givenName, sn, enabled, whenCreated, whenChanged | select samAccountName, givenName, sn, department, EmailAddress, enabled, whenCreated, whenChanged, PasswordLastSet,@{N='LastLogon'; E={[DateTime]::FromFileTime($_.LastLogonTimeStamp)}}, CannotChangePassword, PasswordNeverExpires} | Sort-object department,{$_.samAccountName} | export-csv “$docdir\Password Change Master List – From List.csv” –notypeinformation
+        Write-Host "File 'Password Change Master List – From List is located in $docdir"
+     }
+     else{
+        Get-Content $list | ForEach-Object {Get-aduser $_ -properties department, PasswordLastSet, LastLogonTimeStamp, CannotChangePassword, PasswordNeverExpires, EmailAddress, givenName, sn, enabled, whenCreated, whenChanged | sort-object department,{$_.samAccountName} | select samAccountName, givenName, sn, department, EmailAddress, enabled, whenCreated, whenChanged, PasswordLastSet,@{N='LastLogon'; E={[DateTime]::FromFileTime($_.LastLogonTimeStamp)}}, CannotChangePassword, PasswordNeverExpires} | Sort-Object -Property Name | Out-GridView
+     }
+}
+
+# Basic Error Checking
+else {
+Write-Host "List not found."
+}
